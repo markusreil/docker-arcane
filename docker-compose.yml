@@ -1,0 +1,46 @@
+name: arcane
+
+x-hosts:
+  arcane: &arcane-host arcane.${BASE_DOMAIN:?BASE_DOMAIN is required}
+  arcane-url: &arcane-url http://arcane.${BASE_DOMAIN:?BASE_DOMAIN is required}
+
+services:
+  arcane:
+    image: ghcr.io/getarcaneapp/manager:${ARCANE_VERSION:?ARCANE_VERSION is required}
+    environment:
+      # Proxy contract: hostname always; TLS opt-ins are wired from .env so the
+      # deployment chooses which certificate path applies. Self-signed defaults
+      # to false; set ARCANE_GEN_SELF_SIGNED_CERT=true for local testing.
+      VIRTUAL_HOST: *arcane-host
+      VIRTUAL_PORT: "3552"
+      ACME_HOST: *arcane-host
+      GEN_SELF_SIGNED_CERT: ${ARCANE_GEN_SELF_SIGNED_CERT:-false}
+      APP_URL: *arcane-url
+      ENCRYPTION_KEY: ${ARCANE_ENCRYPTION_KEY:?ARCANE_ENCRYPTION_KEY is required}
+      JWT_SECRET: ${ARCANE_JWT_SECRET:?ARCANE_JWT_SECRET is required}
+      TZ: ${TZ:-UTC}
+      TRUSTED_PROXIES: ${ARCANE_TRUSTED_PROXIES:-}
+    expose:
+      - "3552"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - arcane-data:/app/data
+    cgroup: host
+    restart: unless-stopped
+    labels:
+      homepage.group: Infrastructure
+      homepage.name: Arcane
+      homepage.icon: arcane
+      homepage.href: *arcane-url
+      homepage.description: Docker management UI
+      homepage.showStats: "true"
+    networks:
+      - web-proxy
+
+networks:
+  web-proxy:
+    external: true
+    name: ${NGINX_PROXY_NETWORK:-web-proxy}
+
+volumes:
+  arcane-data:

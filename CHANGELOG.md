@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Set the `arcane-url` `x-hosts` anchor to `https://arcane.<BASE_DOMAIN>` so
+  `APP_URL` and `homepage.href` match the TLS-terminated proxy URL (was
+  `http://`); Arcane derives CORS origins, OIDC redirect URIs and WebAuthn
+  (passkey) origins from `APP_URL`, so the scheme must be `https` behind the
+  proxy.
 - Replaced the service-specific `ARCANE_HOST` variable with the cluster-wide
   `BASE_DOMAIN`; Arcane is now served at `arcane.<BASE_DOMAIN>`, anchored in
   `x-hosts` and referenced by `VIRTUAL_HOST`, `ACME_HOST` and `APP_URL`.

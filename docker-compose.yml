@@ -2,7 +2,7 @@ name: arcane
 
 x-hosts:
   arcane: &arcane-host arcane.${BASE_DOMAIN:?BASE_DOMAIN is required}
-  arcane-url: &arcane-url http://arcane.${BASE_DOMAIN:?BASE_DOMAIN is required}
+  arcane-url: &arcane-url https://arcane.${BASE_DOMAIN:?BASE_DOMAIN is required}
 
 services:
   arcane:

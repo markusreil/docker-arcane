@@ -25,6 +25,14 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - arcane-data:/app/data
+    # Build workspace ("Container Images for local use or push to a registry").
+    # Builds are temporary, so this is an ephemeral in-memory tmpfs rather than
+    # a persistent volume. It must still exist as a writable directory: Arcane
+    # starts as root, chowns the mountpoint to its runtime UID (65532 by
+    # default), then drops privileges; the tmpfs default mode 1777 is writable
+    # by that UID regardless. Contents are lost when the container restarts.
+    tmpfs:
+      - /builds
     cgroup: host
     restart: unless-stopped
     labels:

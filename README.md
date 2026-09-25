@@ -23,6 +23,7 @@ manages the host Docker daemon.
                  │  bind mount
                  ▼
         /var/run/docker.sock        arcane-data (named volume) → /app/data
+                                    tmpfs (ephemeral)          → /builds
 ```
 
 * **External reverse proxy (spec rule 4).** This project does not run a proxy.
@@ -35,8 +36,14 @@ manages the host Docker daemon.
 * **Docker socket.** Arcane manages the host daemon, so it needs
   `/var/run/docker.sock` bind-mounted (the documented exception to rule 7). See
   [`arcane/README.md`](arcane/README.md) for the security reasoning.
-* **State.** All persistent data lives in the named volume `arcane-data`
-  (`/app/data`), not on a host path (rule 7).
+* **State.** Persistent data lives in the named volume `arcane-data`
+  (`/app/data`), not on a host path (rule 7). Arcane's Build Workspace — the
+  Dockerfiles and build contexts used for "Container Images for local use or
+  push to a registry" — is **temporary**, so `/builds` is an ephemeral
+  in-memory `tmpfs`, not a volume. It must exist as a writable directory:
+  Arcane starts as root, chowns the mountpoint to its runtime UID (65532 by
+  default) and then drops privileges. Its contents are discarded when the
+  container restarts.
 
 ## Prerequisites
 

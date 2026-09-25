@@ -19,7 +19,10 @@ tag via `ARCANE_VERSION`.
   seeders* for custom-built images (rule 8). Arcane requires no first-run file
   seeding: it initializes its own data directory on first start and exposes a
   web-based setup wizard for the initial admin account. Adding an entrypoint
-  would only risk overwriting state Arcane manages itself.
+  would only risk overwriting state Arcane manages itself. The image already
+  has its own startup phase that runs as root, prepares writable paths and then
+  drops privileges; the compose file supplies the writable `/builds` path it
+  needs as a `tmpfs` (see below).
 * **No `PUID`/`PGID` drop** — rule 9 applies only where a custom entrypoint
   exists. The upstream image manages its own user and file ownership. Run it
   as-is.
@@ -93,12 +96,38 @@ Security implications to be aware of:
 * Set `ARCANE_TRUSTED_PROXIES` to the proxy's address so forwarded headers are
   only honored from the trusted proxy.
 
-## Persistent data and reseed procedure (rule 7)
+## Persistent data, ephemeral builds, reseed procedure (rule 7)
 
-State lives in the named volume `arcane-data` mounted at `/app/data` (standard
-named volume, no host bind mount).
+Persistent state lives in the standard named volume `arcane-data` → `/app/data`
+— Arcane's database, encryption material and configuration.
 
-To reset Arcane's state (e.g. start over):
+The Build Workspace — the Dockerfiles and build contexts backing "Container
+Images for local use or push to a registry" — is **temporary**, so `/builds` is
+an ephemeral in-memory `tmpfs`, not a volume. Its contents are discarded when
+the container restarts, matching the intended lifecycle of manual builds.
+
+### Why `/builds` must still exist
+
+The upstream image's default builds directory is `/builds` (overridable with
+the `BUILDS_DIRECTORY` environment variable, or *Settings → Builds →
+Builds Directory* in the UI). The `v2.13.1` image does **not** ship a `/builds`
+directory: Arcane starts as root, prepares its writable paths, then drops to
+the unprivileged runtime UID `65532` (`65532:65532` unless `PUID`/`PGID` are
+set). When `/builds` does not exist, the root preparation step skips it and the
+dropped user later fails with:
+
+```
+failed to ensure builds directory: mkdir /builds: permission denied
+```
+
+The compose file mounts a `tmpfs` at `/builds`, which fixes this without a
+custom image, entrypoint or persistent volume: the mountpoint exists, Arcane's
+root startup phase chowns it to its runtime UID, and the tmpfs default mode
+`1777` is writable by that UID regardless.
+
+### Reseed procedure (rule 7)
+
+To reset Arcane's state (e.g. start over), remove the service and its volume:
 
 ```sh
 docker compose down
@@ -106,6 +135,7 @@ docker volume rm arcane_arcane-data   # project-name-prefixed
 docker compose up -d
 ```
 
-Removing only the container (without the volume) preserves all data. Note that
-the volume name is prefixed with the Compose project name `arcane` (set via
-`name:` in `docker-compose.yml`).
+Removing only the container (without the volume) preserves Arcane's data. The
+build workspace needs no cleanup: stopping or recreating the container discards
+the tmpfs. Note the volume name is prefixed with the Compose project name
+`arcane` (set via `name:` in `docker-compose.yml`).

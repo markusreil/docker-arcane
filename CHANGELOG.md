@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Ephemeral `tmpfs` at `/builds` on the Arcane service so its Build Workspace
+  ("Container Images for local use or push to a registry") has the writable
+  directory it expects without persisting temporary build contexts.
 - `homepage.showStats` label on the Arcane service so its Homepage card can
   expand the container CPU/memory/network stats block.
 - `AGENTS.md` summarizing the ongoing project rules for agents working in the repo.
@@ -43,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `failed to ensure builds directory: mkdir /builds: permission denied` —
+  Arcane drops to its unprivileged runtime UID (`65532`) and `/builds` did not
+  exist; the service now provides a writable `/builds` via an ephemeral
+  `tmpfs`.
 - Added the missing `homepage.icon` (`arcane`) and `homepage.description` labels
   so the Arcane card renders instead of appearing empty in Homepage.
 

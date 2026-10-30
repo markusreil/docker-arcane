@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Switched `ARCANE_VERSION` from the `v2.13.1` pin to `latest` (2026-10-30); floating is acceptable here because Arcane is a non-vital third-party container.
 - Set the `arcane-url` `x-hosts` anchor to `https://arcane.<BASE_DOMAIN>` so
   `APP_URL` and `homepage.href` match the TLS-terminated proxy URL (was
   `http://`); Arcane derives CORS origins, OIDC redirect URIs and WebAuthn

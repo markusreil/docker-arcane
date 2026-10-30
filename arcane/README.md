@@ -8,8 +8,8 @@ Arcane is a complete third-party application distributed as an upstream image,
 `ghcr.io/getarcaneapp/manager`. The upstream image **is** the service: it ships
 the application, its HTTP server on port `3552`, its own user handling and its
 own data layout. Rebuilding it here would mean re-packaging someone else's
-release with no benefit, so this project consumes the image as-is and pins the
-tag via `ARCANE_VERSION`.
+release with no benefit, so this project consumes the image as-is and selects the
+tag via `ARCANE_VERSION` (currently `latest`).
 
 ## Why there is no Dockerfile or entrypoint.sh (spec rules 8-9)
 
@@ -34,7 +34,7 @@ preserve. The reset procedure (below) is purely operational.
 
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
-| `ARCANE_VERSION` | yes | — | Upstream image tag, e.g. `v2.13.1`. Pin for reproducibility. |
+| `ARCANE_VERSION` | yes | — | Upstream image tag, currently `latest`. Floating is acceptable here: Arcane is a non-vital third-party container. |
 | `BASE_DOMAIN` | yes | — | Cluster base domain. Arcane is served at `arcane.<BASE_DOMAIN>`, anchored in `x-hosts` and reused for `VIRTUAL_HOST`, `ACME_HOST`, the `GEN_SELF_SIGNED_CERT` opt-in and `APP_URL`. |
 | `ARCANE_GEN_SELF_SIGNED_CERT` | no | `false` | Self-signed TLS opt-in for the LAN proxy variant. `true` requests a self-signed cert for `arcane.<BASE_DOMAIN>`; `false` relies on the ACME opt-in only. Wired to `GEN_SELF_SIGNED_CERT`. |
 | `ARCANE_ENCRYPTION_KEY` | yes | — | 32-byte key (raw/base64/hex) used to encrypt stored secrets. Generate: `openssl rand -hex 32`. Must stay stable. |
@@ -110,7 +110,7 @@ the container restarts, matching the intended lifecycle of manual builds.
 
 The upstream image's default builds directory is `/builds` (overridable with
 the `BUILDS_DIRECTORY` environment variable, or *Settings → Builds →
-Builds Directory* in the UI). The `v2.13.1` image does **not** ship a `/builds`
+Builds Directory* in the UI). The upstream image does **not** ship a `/builds`
 directory: Arcane starts as root, prepares its writable paths, then drops to
 the unprivileged runtime UID `65532` (`65532:65532` unless `PUID`/`PGID` are
 set). When `/builds` does not exist, the root preparation step skips it and the
